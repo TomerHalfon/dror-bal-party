@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dror & Bal Party — Ops Timeline</title>
+<style>
+  :root{
+    --bg:#0f0c1d; --panel:#1a1530; --panel2:#231b40; --ink:#ece8ff; --muted:#a99fd1;
+    --line:#352a5c; --gold:#e8b339; --red:#b91c1c; --green:#16a34a; --amber:#d97706; --blue:#2563eb;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 20% -10%,#241a45,transparent),var(--bg);
+       color:var(--ink);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;padding:28px 22px 60px}
+  .wrap{max-width:1040px;margin:0 auto}
+  h1{font-size:1.7rem;margin:0 0 2px;letter-spacing:.3px}
+  .sub{color:var(--muted);font-size:.92rem;margin-bottom:20px}
+  .topgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  .card .big{font-size:1.7rem;font-weight:700;line-height:1.1}
+  .card .lbl{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.6px;margin-top:4px}
+  .countdown .big{color:var(--gold)}
+  .progwrap{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:22px}
+  .bar{height:14px;background:var(--panel2);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+  .bar > i{display:block;height:100%;background:linear-gradient(90deg,#16a34a,#4ade80);width:0;transition:width .6s}
+  .progmeta{display:flex;justify-content:space-between;color:var(--muted);font-size:.82rem;margin-top:8px}
+  .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;align-items:center}
+  .chip{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 12px;border-radius:20px;
+        font-size:.82rem;cursor:pointer;user-select:none}
+  .chip.active{background:var(--gold);color:#1a1530;border-color:var(--gold);font-weight:600}
+  .chip.small{font-size:.74rem;padding:4px 10px}
+  .phase{margin:26px 0 10px;font-size:.78rem;text-transform:uppercase;letter-spacing:1.4px;color:var(--gold);
+         border-bottom:1px solid var(--line);padding-bottom:6px;display:flex;justify-content:space-between}
+  .item{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:start;
+        background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--line);
+        border-radius:12px;padding:12px 16px;margin-bottom:9px}
+  .item.done{opacity:.62}
+  .item.overdue{border-left-color:var(--red);background:#241320}
+  .item.soon{border-left-color:var(--amber)}
+  .date{font-size:.82rem;color:var(--muted);line-height:1.35}
+  .date .d{color:var(--ink);font-weight:600}
+  .days{font-size:.72rem;margin-top:3px;font-weight:600}
+  .days.over{color:#f87171}.days.soon{color:#fbbf24}.days.ok{color:var(--muted)}
+  .title{font-size:.98rem;font-weight:600;margin-bottom:4px}
+  .item.done .title{text-decoration:line-through;text-decoration-color:var(--muted)}
+  .notes{color:var(--muted);font-size:.82rem;line-height:1.4}
+  .meta{display:flex;flex-direction:column;align-items:flex-end;gap:6px;min-width:120px}
+  .catchip{font-size:.72rem;padding:3px 9px;border-radius:20px;color:#fff;white-space:nowrap}
+  .owner{font-size:.76rem;color:var(--muted)}
+  .status{font-size:.72rem;font-weight:700;padding:3px 9px;border-radius:6px;text-transform:uppercase;letter-spacing:.5px}
+  .status.done{background:rgba(22,163,74,.18);color:#4ade80}
+  .status.todo{background:rgba(37,99,235,.18);color:#7aa5ff}
+  .status.blocked{background:rgba(185,28,28,.2);color:#f87171}
+  .status.in_progress{background:rgba(217,119,6,.2);color:#fbbf24}
+  .legend{color:var(--muted);font-size:.76rem;margin-top:30px;text-align:center;border-top:1px solid var(--line);padding-top:16px}
+  .err{background:#241320;border:1px solid var(--red);border-radius:12px;padding:18px;color:#f8b4b4;font-size:.9rem;line-height:1.5}
+  .src{font-size:.72rem;color:var(--muted);margin-bottom:14px}
+  .hidden{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🐉 Dror & Bal — Bachelor/ette Ops Timeline</h1>
+  <div class="sub" id="sub"></div>
+  <div class="src" id="srcNote"></div>
+
+  <div class="topgrid">
+    <div class="card countdown"><div class="big" id="cd">—</div><div class="lbl">Days to party</div></div>
+    <div class="card"><div class="big" id="stDone">0</div><div class="lbl">Done</div></div>
+    <div class="card"><div class="big" id="stOpen">0</div><div class="lbl">Open tasks</div></div>
+    <div class="card"><div class="big" id="stBlocked">0</div><div class="lbl">Blocked</div></div>
+    <div class="card"><div class="big" id="stOver" style="color:#f87171">0</div><div class="lbl">Overdue</div></div>
+  </div>
+
+  <div class="progwrap">
+    <div class="bar"><i id="progBar"></i></div>
+    <div class="progmeta"><span id="progTxt"></span><span id="progPct"></span></div>
+  </div>
+
+  <div class="filters" id="statusFilters">
+    <span class="chip active" data-status="all">All</span>
+    <span class="chip" data-status="todo">To do</span>
+    <span class="chip" data-status="blocked">Blocked</span>
+    <span class="chip" data-status="done">Done</span>
+    <span class="chip" data-status="overdue">⚠ Overdue</span>
+  </div>
+  <div class="filters" id="catFilters"></div>
+
+  <div id="timeline"></div>
+
+  <div class="legend">Source of truth: <b>timeline.json</b> · This dashboard loads it live · Updated as decisions are made</div>
+</div>
+
+<script>
+let DATA = null;
+let today = new Date(); today.setHours(0,0,0,0);
+let party, dayMs = 86400000;
+const fmt = d => new Date(d+"T00:00:00").toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+const wd  = d => new Date(d+"T00:00:00").toLocaleDateString('en-GB',{weekday:'short'});
+let fStatus = "all", fCat = "all";
+
+async function loadData(){
+  const r = await fetch('timeline.json', {cache:'no-store'});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  document.getElementById('srcNote').textContent = "Loaded live from timeline.json";
+  return await r.json();
+}
+
+function daysTo(d){ return Math.round((new Date(d+"T00:00:00")-today)/dayMs); }
+function isOverdue(m){ return m.status!=="done" && daysTo(m.date) < 0; }
+
+function computeStats(){
+  const ms = DATA.milestones;
+  const done = ms.filter(m=>m.status==="done").length;
+  const open = ms.filter(m=>m.status!=="done" && m.id!=="party").length;
+  const blocked = ms.filter(m=>m.status==="blocked").length;
+  const over = ms.filter(isOverdue).length;
+  document.getElementById('stDone').textContent = done;
+  document.getElementById('stOpen').textContent = open;
+  document.getElementById('stBlocked').textContent = blocked;
+  document.getElementById('stOver').textContent = over;
+  const total = done+open; const pct = total? Math.round(done/total*100):0;
+  document.getElementById('progBar').style.width = pct+"%";
+  document.getElementById('progTxt').textContent = done+" of "+total+" milestones done";
+  document.getElementById('progPct').textContent = pct+"%";
+  const cd = Math.max(0, Math.round((party-today)/dayMs));
+  document.getElementById('cd').textContent = cd;
+  document.getElementById('sub').textContent =
+    "Kickoff "+fmt(DATA.kickoff)+" → Party "+fmt(DATA.eventDate)+", 2026  ·  planned backward from the big day  ·  last updated "+fmt(DATA.lastUpdated);
+}
+
+function buildCatFilters(){
+  const box = document.getElementById('catFilters');
+  box.innerHTML = '<span class="chip small active" data-cat="all">All areas</span>';
+  Object.keys(DATA.categories).forEach(c=>{
+    const s=document.createElement('span');
+    s.className="chip small"; s.dataset.cat=c; s.textContent=c;
+    s.style.borderColor=DATA.categories[c];
+    box.appendChild(s);
+  });
+}
+
+function passes(m){
+  if(fCat!=="all" && m.category!==fCat) return false;
+  if(fStatus==="all") return true;
+  if(fStatus==="overdue") return isOverdue(m);
+  return m.status===fStatus;
+}
+
+function render(){
+  const tl = document.getElementById('timeline'); tl.innerHTML="";
+  const order = ["History","This week","4 weeks out","3 weeks out","2 weeks out","1 week out","Final week","Party"];
+  const ms = [...DATA.milestones].sort((a,b)=> a.date.localeCompare(b.date));
+  order.forEach(phase=>{
+    const group = ms.filter(m=>m.phase===phase && passes(m));
+    if(!group.length) return;
+    const h=document.createElement('div'); h.className="phase";
+    const open=group.filter(m=>m.status!=="done").length;
+    h.innerHTML="<span>"+phase+"</span><span>"+(open?open+" open":"✓ clear")+"</span>";
+    tl.appendChild(h);
+    group.forEach(m=>{
+      const dleft=daysTo(m.date), over=isOverdue(m), soon=!over && m.status!=="done" && dleft>=0 && dleft<=7;
+      const el=document.createElement('div');
+      el.className="item "+(m.status==="done"?"done":over?"overdue":soon?"soon":"");
+      let dayTxt;
+      if(m.status==="done") dayTxt='<span class="days ok">done</span>';
+      else if(over) dayTxt='<span class="days over">'+Math.abs(dleft)+'d overdue</span>';
+      else if(dleft===0) dayTxt='<span class="days soon">today</span>';
+      else dayTxt='<span class="days '+(soon?'soon':'ok')+'">in '+dleft+'d</span>';
+      el.innerHTML=
+        '<div class="date"><div class="d">'+fmt(m.date)+'</div><div>'+wd(m.date)+'</div>'+dayTxt+'</div>'+
+        '<div><div class="title">'+m.title+'</div>'+(m.notes?'<div class="notes">'+m.notes+'</div>':'')+'</div>'+
+        '<div class="meta"><span class="catchip" style="background:'+DATA.categories[m.category]+'">'+m.category+'</span>'+
+        '<span class="owner">'+m.owner+'</span>'+
+        '<span class="status '+m.status+'">'+m.status.replace('_',' ')+'</span></div>';
+      tl.appendChild(el);
+    });
+  });
+}
+
+document.getElementById('statusFilters').addEventListener('click',e=>{
+  if(!e.target.dataset.status) return;
+  fStatus=e.target.dataset.status;
+  [...document.querySelectorAll('#statusFilters .chip')].forEach(c=>c.classList.toggle('active',c===e.target));
+  render();
+});
+document.getElementById('catFilters').addEventListener('click',e=>{
+  if(!e.target.dataset.cat) return;
+  fCat=e.target.dataset.cat;
+  [...document.querySelectorAll('#catFilters .chip')].forEach(c=>c.classList.toggle('active',c===e.target));
+  render();
+});
+
+(async function init(){
+  try{
+    DATA = await loadData();
+  }catch(e){
+    document.getElementById('timeline').innerHTML =
+      '<div class="err"><b>Couldn\'t load timeline.json.</b><br>' +
+      'On GitHub Pages (or any web server) this loads automatically.<br>' +
+      'To preview locally, run a server in this folder — e.g. <code>python -m http.server</code> — then open ' +
+      '<code>http://localhost:8000/timeline_dashboard.html</code>. Opening the file directly (file://) is blocked by the browser.</div>';
+    return;
+  }
+  party = new Date(DATA.eventDate+"T00:00:00");
+  computeStats(); buildCatFilters(); render();
+})();
+</script>
+</body>
+</html>
